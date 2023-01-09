@@ -1,42 +1,48 @@
+import numpy as np
+import time
 import cv2
-import tkinter as tk
-from PIL import Image, ImageTk
+import os
+from calibration import Calibration
 
-# Create a VideoCapture object and read from input file
-# If the input is the camera, pass 0 instead of the video file name
-cap = cv2.VideoCapture('/dev/video2')
+class ArucoDetector:
+    def __init__(self) -> None:
+        
+        self.ARUCO_DICT = {
+            "DICT_4X4_50": cv2.aruco.DICT_4X4_50,
+            "DICT_4X4_100": cv2.aruco.DICT_4X4_100,
+            "DICT_4X4_250": cv2.aruco.DICT_4X4_250,
+            "DICT_4X4_1000": cv2.aruco.DICT_4X4_1000,
+            "DICT_5X5_50": cv2.aruco.DICT_5X5_50,
+            "DICT_5X5_100": cv2.aruco.DICT_5X5_100,
+            "DICT_5X5_250": cv2.aruco.DICT_5X5_250,
+            "DICT_5X5_1000": cv2.aruco.DICT_5X5_1000,
+            "DICT_6X6_50": cv2.aruco.DICT_6X6_50,
+            "DICT_6X6_100": cv2.aruco.DICT_6X6_100,
+            "DICT_6X6_250": cv2.aruco.DICT_6X6_250,
+            "DICT_6X6_1000": cv2.aruco.DICT_6X6_1000,
+            "DICT_7X7_50": cv2.aruco.DICT_7X7_50,
+            "DICT_7X7_100": cv2.aruco.DICT_7X7_100,
+            "DICT_7X7_250": cv2.aruco.DICT_7X7_250,
+            "DICT_7X7_1000": cv2.aruco.DICT_7X7_1000,
+            "DICT_ARUCO_ORIGINAL": cv2.aruco.DICT_ARUCO_ORIGINAL,
+            "DICT_APRILTAG_16h5": cv2.aruco.DICT_APRILTAG_16h5,
+            "DICT_APRILTAG_25h9": cv2.aruco.DICT_APRILTAG_25h9,
+            "DICT_APRILTAG_36h10": cv2.aruco.DICT_APRILTAG_36h10,
+            "DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
+        }
+        
 
-# Create a Tkinter window
-window = tk.Tk()
-window.title("OpenCV and Tkinter")
+        self.aruco_type = "DICT_6X6_100"
 
-# This function is called every time the video frame is updated
-def update_frame():
-    # Read the next frame from the video capture object
-    _, frame = cap.read()
+        self.arucoDict = cv2.aruco.getPredefinedDictionary(self.ARUCO_DICT[self.aruco_type])
+        self.arucoParams = cv2.aruco.DetectorParameters()
+        self.calibration = Calibration()
+        print(self.calibration.getCalibration())
 
-    # Convert the image from BGR color (which OpenCV uses) to RGB color (which Tkinter can display)
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        self.detector = cv2.aruco.ArucoDetector(self.arucoDict, self.arucoParams)
+        self.cap = cv2.VideoCapture('/dev/video2')
 
-    # Create a PhotoImage object from the frame
-    image = ImageTk.PhotoImage(image=Image.fromarray(frame))
+    def run(self):
+        pass
 
-    # Update the label's image
-    label.config(image=image)
-    label.image = image
-
-    # Set the delay between frames
-    window.after(15, update_frame)
-
-# Create a label to display the video frame
-label = tk.Label(master=window)
-label.pack()
-
-# Start the frame update loop
-update_frame()
-
-# Run the Tkinter event loop
-window.mainloop()
-
-# Release the video capture object
-cap.release()
+arucomachine = ArucoDetector()
