@@ -37,10 +37,11 @@ def display_markers_and_axes(images, camera_matrix, dist_coeff):
         print(e)
 
 def calc_dist(tvec):
-    return (tvec[0][0][2] * 100)
+    return 1.033*(tvec[0][0][2] * 100)- 0.6629
 
 def run():
     cap = cv2.VideoCapture('/dev/video2')
+    im_name = 0
     while cap.isOpened():
         ret, img = cap.read()
             # Convert the image to grayscale
@@ -51,15 +52,18 @@ def run():
         # Iterate through each object in the image
         for corner in corners:
             # Estimate the pose of the object using the detected markers
-            rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corner, 0.049, camera_matrix, dist_coeff)
+            rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corner, 0.04, camera_matrix, dist_coeff)
             # Draw the axis of the object on the image
             cv2.aruco.drawDetectedMarkers(img, corners, ids)
-            img = cv2.drawFrameAxes(img, camera_matrix, dist_coeff, rvec, tvec, 0.049, 4)
+            #img = cv2.drawFrameAxes(img, camera_matrix, dist_coeff, rvec, tvec, 0.049, 4)
             cv2.putText(img, "%.1f cm" % (calc_dist(tvec)), org=(int(corner[0][2][0]), int(corner[0][2][1])), fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=.9,color= (0, 0, 255))
+        img = cv2.resize(img, (800, 800))
         cv2.imshow("Axes", img)
         key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            break
+        if key == ord("s"):
+            cv2.imwrite('./assets/tests/' + str(im_name)+'.jpg', img)
+            im_name+=1
+            print('Picture saved in /assets/tests/', str(im_name) + '.jpg')
             
 def read_chessboards(images):
     """
