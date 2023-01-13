@@ -2,59 +2,68 @@ import cv2
 import numpy as np
 import os
 import math
+
+    
+
 def display_markers_and_axes(images, camera_matrix, dist_coeff):
   print('=='*10)
   # Convert the image to grayscale
   for  i, image in enumerate(images):
     img = cv2.imread(image)
-        # Convert the image to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Detect aruco markers in the image
-    corners, ids, rejected = cv2.aruco.detectMarkers(gray, cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250))
-    refCorners, refIds, refRejected, ref = cv2.aruco.refineDetectedMarkers(gray, charuco_board, corners, ids, rejected, camera_matrix, dist_coeff)
-    # If markers are detected, draw them on the image and display the image
-    if refCorners:
-        print(f"{i}/{len(images)}", image, "marker detected")
-    else:
-        print(f"{i}/{len(images)}", image, "No markers detected")
-        # If no markers are detected, print an error message
-        # Iterate through each object in the image
-    total_markers = range(0, len(refIds))
-    for corner, id, i in zip(refCorners,refIds, total_markers):
-        # Estimate the pose of the object using the detected markers
-        rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corner, 0.02, camera_matrix, dist_coeff)
-        # Draw the axis of the object on the image
-        img = cv2.aruco.drawDetectedMarkers(img, refCorners)
-        img = cv2.drawFrameAxes(img, camera_matrix, dist_coeff, rvec, tvec, 0.02, 2)
-        cv2.putText(img, "%.1f cm" % (calc_dist(rvec, tvec)), org=(int(corner[0][2][0]), int(corner[0][2][1])), fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=.9,color= (0, 0, 255))
-        # Display the image
-        cv2.imwrite('assets/output/' + image.split('/')[3], img)
+    try:
+            # Convert the image to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Detect aruco markers in the image
+        corners, ids, rejected = cv2.aruco.detectMarkers(gray, cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250))
+        refCorners, refIds, refRejected, ref = cv2.aruco.refineDetectedMarkers(gray, charuco_board, corners, ids, rejected, camera_matrix, dist_coeff)
+        # If markers are detected, draw them on the image and display the image
+        if refCorners:
+            print(f"{i}/{len(images)}", image, "marker detected")
+        else:
+            print(f"{i}/{len(images)}", image, "No markers detected")
+            # If no markers are detected, print an error message
+            # Iterate through each object in the image
+        total_markers = range(0, len(refIds))
+        for corner, id, i in zip(refCorners,refIds, total_markers):
+            # Estimate the pose of the object using the detected markers
+            rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corner, 0.02, camera_matrix, dist_coeff)
+            # Draw the axis of the object on the image
+            img = cv2.aruco.drawDetectedMarkers(img, refCorners, refIds)
+            img = cv2.drawFrameAxes(img, camera_matrix, dist_coeff, rvec, tvec, 0.02, 4)
+            #cv2.putText(img, "%.1f cm" % (calc_dist(rvec, tvec)), org=(int(corner[0][2][0]), int(corner[0][2][1])), fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=.9,color= (0, 0, 255))
+            # Display the image
+            cv2.imwrite('assets/output/' + image.split('/')[3], img)
+    except Exception as e:
+        print(e)
 
-def calc_dist(rvec, tvec):
-    return (tvec[0][0][2] * 100)/1.7
-    
+def calc_dist(tvec):
+    return 1.033*(tvec[0][0][2] * 100)- 0.6629
 
 def run():
-    cap = cv2.VideoCapture('/dev/video0')
+    cap = cv2.VideoCapture('/dev/video2')
+    im_name = 0
     while cap.isOpened():
         ret, img = cap.read()
             # Convert the image to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # Detect aruco markers in the image
-        corners, _, _ = cv2.aruco.detectMarkers(gray, cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250))
+        corners, ids, _ = cv2.aruco.detectMarkers(gray, cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250))
         # If markers are detected, draw them on the image and display the image
         # Iterate through each object in the image
         for corner in corners:
             # Estimate the pose of the object using the detected markers
-            rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corner, 0.02, camera_matrix, dist_coeff)
+            rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corner, 0.04, camera_matrix, dist_coeff)
             # Draw the axis of the object on the image
-            cv2.aruco.drawDetectedMarkers(img, corners)
-            img = cv2.drawFrameAxes(img, camera_matrix, dist_coeff, rvec, tvec, 0.02, 4)
-            cv2.putText(img, "%.1f cm" % (calc_dist(rvec,tvec)), org=(int(corner[0][2][0]), int(corner[0][2][1])), fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=.9,color= (0, 0, 255))
+            cv2.aruco.drawDetectedMarkers(img, corners, ids)
+            #img = cv2.drawFrameAxes(img, camera_matrix, dist_coeff, rvec, tvec, 0.049, 4)
+            cv2.putText(img, "%.1f cm" % (calc_dist(tvec)), org=(int(corner[0][2][0]), int(corner[0][2][1])), fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=.9,color= (0, 0, 255))
+        img = cv2.resize(img, (800, 800))
         cv2.imshow("Axes", img)
         key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            break
+        if key == ord("s"):
+            cv2.imwrite('./assets/tests/' + str(im_name)+'.jpg', img)
+            im_name+=1
+            print('Picture saved in /assets/tests/', str(im_name) + '.jpg')
             
 def read_chessboards(images):
     """
@@ -125,11 +134,11 @@ def calibrate_cam(images, charuco_dict):
     ret, camera_matrix, dist_coeff, rvec, tvec = cv2.aruco.calibrateCameraCharuco(allCorners,allIds,charuco_board,image_size,None,None, criteria=(cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 100, 1e-5))
     # Print the calibration results
     np.savez("calib.npz", ret=ret, cam_matrix=camera_matrix, dist_coef=dist_coeff, r_vec=rvec, t_vec=tvec)
-    print("Camera matrix:", camera_matrix)
-    print("Distortion coefficients:", dist_coeff)
+    print("[INFO] Calibration finished successfully. Data in calib.npz")
     return camera_matrix, dist_coeff
 
 # Define the objects in the image
+
 images = ['./assets/input/' + f for f in os.listdir('./assets/input') if f.endswith(".jpg")]
 dict_aruco = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
 charuco_board = cv2.aruco.CharucoBoard((5, 7), 0.04, 0.02, dict_aruco)
